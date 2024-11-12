@@ -1,0 +1,26 @@
+dna_sequence = "GCATGCTGCGAAACTTTGGCTGAGCATGCTGCGAAACTTTGGCTGAGCATGCTGCGAAACTTTGGCTGA"
+
+
+gc_content = (dna_sequence.count('G') + dna_sequence.count('C')) / len(dna_sequence) * 100
+
+
+motifs = ["GCATGCTGC", "AACTTTGGC","TTT"]  # List of motifs to find
+motif_positions = {motif: [i for i in range(len(dna_sequence)) if dna_sequence.startswith(motif, i)] for motif in motifs}
+
+
+coding_regions = [(i, dna_sequence.find(stop, i) + 3) for i in range(len(dna_sequence)) 
+                  if dna_sequence.startswith('ATG', i) 
+                  for stop in ['TAG', 'TAA', 'TGA'] if dna_sequence.find(stop, i) != -1]
+
+
+print(f"GC Content: {gc_content:.2f}%")
+print("Motif positions:", motif_positions)
+print("Coding regions (start, stop):", coding_regions)
+
+
+report += f"GC Content : {gc_content}"
+report += f"\n\nMotif Positions : {motif_positions}"
+report += f"\n\nCoding Regions (start,stop): {coding_regions}"
+
+with open("DNA_SEQUENCE_ANALYSISisis.txt", "w") as report_file:
+    report_file.write(report)
