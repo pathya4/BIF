@@ -1,0 +1,64 @@
+import pandas as pd
+import numpy as np
+from scipy.stats import ttest_ind
+from statsmodels.stats.multitest import multipletests
+
+np.random.seed(42)
+genes = ["Gene1", "Gene2", "Gene3", "Gene4"]
+sample1_counts = np.random.poisson(lam=100, size=10)
+sample2_counts = np.random.poisson(lam=80, size=10)
+
+
+data = pd.DataFrame({
+    "Gene": genes,
+    "Sample1_Counts": [np.random.poisson(lam=100, size=10) for _ in genes],
+    "Sample2_Counts": [np.random.poisson(lam=80, size=10) for _ in genes]
+})
+
+
+data["Sample1_Mean"] = [np.mean(counts) for counts in data["Sample1_Counts"]]
+data["Sample2_Mean"] = [np.mean(counts) for counts in data["Sample2_Counts"]]
+
+
+p_values = []
+for _, row in data.iterrows():
+    _, p_value = ttest_ind(row["Sample1_Counts"], row["Sample2_Counts"])
+    p_values.append(p_value)
+
+data["PValue"] = p_values
+
+
+data["AdjPValue"] = multipletests(data["PValue"], method='fdr_bh')[1]
+
+
+differential_genes = data[data["AdjPValue"] < 0.05]
+
+
+annotations = {
+    "Gene1": "GO:0001234,GO:5678901",
+    "Gene2": "GO:2345678,GO:8901234",
+    "Gene3": "GO:1234567",
+    "Gene4": "GO:5678901,GO:2345678"
+}
+
+
+differential_genes["GO_Annotations"] = differential_genes["Gene"].map(annotations)
+
+print("RNA-Seq Differential Expression Analysis Report")
+print("="*50)
+print("Differentially Expressed Genes:")
+if not differential_genes.empty:
+    print(f"{'Gene':<10} {'Mean Sample1':>15} {'Mean Sample2':>15} {'Adj. P-Value':>15}")
+    print("="*50)
+    for _, row in differential_genes.iterrows():
+        print(f"{row['Gene']:<10} {row['Sample1_Mean']:>15.2f} {row['Sample2_Mean']:>15.2f} {row['AdjPValue']:>15.4f}")
+else:
+    print("No differentially expressed genes found.")
+
+print("="*50)
+print("Functional Annotations:")
+if not differential_genes.empty:
+    for _, row in differential_genes.iterrows():
+        print(f"{row['Gene']:<10} {row['GO_Annotations']}")
+else:
+    print("No functional annotations available.")
